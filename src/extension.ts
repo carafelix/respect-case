@@ -10,6 +10,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(respectCaseLeft);
 	context.subscriptions.push(respectCaseRight);
+	context.subscriptions.push(respectCaseLeftStops);
+	context.subscriptions.push(respectCaseRightStops);
 }
 export function deactivate() { }
 
