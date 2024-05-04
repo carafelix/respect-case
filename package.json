@@ -10,6 +10,7 @@
   "categories": [
     "Other"
   ],
+  "publisher": "heroprotagonist",
   "repository": "https://github.com/carafelix/respect-case",
   "activationEvents": [],
   "main": "./dist/extension.js",
