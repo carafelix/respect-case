@@ -14,8 +14,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "respect-casings.helloWorld",
-        "title": "Hello World"
+        "command": "respect-casings.left",
+        "title": "Move to left respecting casing"
+      },
+      {
+        "command": "respect-casings.right",
+        "title": "Move to right respecting casing"
+      }
+    ],
+    "keybindings": [
+      {
+          "command": "respect-casings.left",
+          "key": "ctrl+alt+[Comma]",
+          "when": "textInputFocus"
+      },
+      {
+        "command": "respect-casings.right",
+        "key": "ctrl+alt+[Period]",
+        "when": "textInputFocus"
       }
     ]
   },

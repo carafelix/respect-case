@@ -1,26 +1,150 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { CharCode, isAsciiDigit, isLowerAsciiLetter, isUpperAsciiLetter } from './utils';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	const outputChannel = vscode.window.createOutputChannel('Respect');
+	let respectCaseLeft = vscode.commands.registerCommand('respect-casings.left', factoryOfCursors('left', { stopOnPunctuation: false }));
+	let respectCaseRight = vscode.commands.registerCommand('respect-casings.right', factoryOfCursors('right', { stopOnPunctuation: false }));
+	let respectCaseLeftStops = vscode.commands.registerCommand('respect-casings.leftStopsOnPunctuation', factoryOfCursors('left', { stopOnPunctuation: true }));
+	let respectCaseRightStops = vscode.commands.registerCommand('respect-casings.rightStopsOnPunctuation', factoryOfCursors('right', { stopOnPunctuation: true }));
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "respect-casings" is now active!');
+	context.subscriptions.push(respectCaseLeft);
+	context.subscriptions.push(respectCaseRight);
+}
+export function deactivate() { }
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('respect-casings.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Respect Casings!');
-	});
-
-	context.subscriptions.push(disposable);
+interface FactoryOpts {
+	stopOnPunctuation : boolean
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+function factoryOfCursors(rightOrfLeft: 'right' | 'left', { stopOnPunctuation } : FactoryOpts) {
+	if (rightOrfLeft === 'right') {
+		return function goRight() {
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) { return; };
+
+			const document = editor.document;
+			const cursorPosition = editor.selection.active;
+
+			const line = cursorPosition.line;
+			const lineContent = document.lineAt(line).text;
+
+			const lastLine = document.lineCount - 1
+			let column = cursorPosition.character;
+
+			const lineLeftPadding = lineContent.length - lineContent.trimStart().length
+			if (column < lineLeftPadding) {
+				const newPosition = new vscode.Position(line, lineLeftPadding);
+				editor.selection = new vscode.Selection(newPosition, newPosition);
+				return;
+			}
+
+			if (line === lastLine && column === lineContent.length) { return }
+
+			if (lineContent.slice(column + 1).replace(/\s/g, '').length === 0) {
+				const newPosition = new vscode.Position(line + 1, 0);
+				editor.selection = new vscode.Selection(newPosition, newPosition);
+				return;
+			}
+
+			let left = lineContent.charCodeAt(column - 1);
+			let right = lineContent.charCodeAt(column);
+
+			if (right === CharCode.Underline && left !== CharCode.Dash ||
+				right === CharCode.Dash && left !== CharCode.Dash
+			) {
+				const newPosition = new vscode.Position(line, column + 1);
+				editor.selection = new vscode.Selection(newPosition, newPosition);
+				return
+			}
+			if ((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) ||
+				String.fromCharCode(left).match(/\s/)) {
+				column += 1
+			}
+
+			for (let i = column; i < lineContent.length - 1; i++) {
+				left = lineContent.charCodeAt(i - 1);
+				right = lineContent.charCodeAt(i);
+
+				if ((right === CharCode.Underline && left !== CharCode.Underline) || // snake_case_variables
+					(right === CharCode.Dash && left !== CharCode.Dash) || // kebab-case-variables  
+					((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right)) || // camelCaseVariables
+					String.fromCharCode(left).match(/\s/) ||
+					(stopOnPunctuation && (
+						right === CharCode.Period && left !== CharCode.Period || 
+						right === CharCode.Colon && left !== CharCode.Colon ||
+						right === CharCode.Slash && left !== CharCode.Slash ||
+						right === CharCode.Comma && left !== CharCode.Comma
+					))
+				) {
+					const newPosition = new vscode.Position(line, i);
+					editor.selection = new vscode.Selection(newPosition, newPosition);
+					return;
+				}
+			}
+			const newPosition = new vscode.Position(line, lineContent.length - 1);
+			editor.selection = new vscode.Selection(newPosition, newPosition);
+		}
+	} else {
+		return function goLeft() {
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) { return; };
+
+			const document = editor.document;
+			const cursorPosition = editor.selection.active;
+
+			const line = cursorPosition.line;
+			const lineContent = document.lineAt(line).text;
+			let column = cursorPosition.character;
+
+			if (line === 0 && column === 0) { return }
+
+			if (lineContent.slice(0, column).replace(/\s/g, '').length === 0) {
+				const newPosition = new vscode.Position(line - 1, document.lineAt(line - 1).text.length);
+				editor.selection = new vscode.Selection(newPosition, newPosition);
+				return;
+			}
+
+
+			let left = lineContent.charCodeAt(column - 1);
+			let right = lineContent.charCodeAt(column);
+
+			if (left === CharCode.Underline && right !== CharCode.Underline ||
+				left === CharCode.Dash && right !== CharCode.Dash
+			) {
+				const newPosition = new vscode.Position(line, column - 1);
+				editor.selection = new vscode.Selection(newPosition, newPosition);
+				return
+			}
+			if ((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) ||
+				String.fromCharCode(left).match(/\s/)) {
+				column -= 1
+			}
+
+			for (let i = column; i > 1; i--) {
+				left = lineContent.charCodeAt(i - 1);
+				right = lineContent.charCodeAt(i);
+
+				if ((left === CharCode.Underline && right !== CharCode.Underline) ||  // snake_case_variables
+					(left === CharCode.Dash && right !== CharCode.Dash) || // kebab-case-variables
+					(isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) || // camelCaseVariables
+					String.fromCharCode(left).match(/\s/) ||
+					(stopOnPunctuation && (
+						right === CharCode.Period && left !== CharCode.Period || 
+						right === CharCode.Colon && left !== CharCode.Colon ||
+						right === CharCode.Slash && left !== CharCode.Slash || 
+						right === CharCode.Comma && left !== CharCode.Comma
+					))
+				) {
+					const newPosition = new vscode.Position(line, i);
+					editor.selection = new vscode.Selection(newPosition, newPosition);
+					return;
+				}
+			}
+			const newPosition = new vscode.Position(line, 0);
+			editor.selection = new vscode.Selection(newPosition, newPosition);
+		}
+	}
+}
+
+
