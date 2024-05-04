@@ -16,10 +16,10 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() { }
 
 interface FactoryOpts {
-	stopOnPunctuation : boolean
+	stopOnPunctuation: boolean
 }
 
-function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctuation } : FactoryOpts) {
+function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctuation }: FactoryOpts) {
 	if (rightOrfLeft === 'right') {
 		return function goRight() {
 			const editor = vscode.window.activeTextEditor;
@@ -31,17 +31,17 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			const line = cursorPosition.line;
 			const lineContent = document.lineAt(line).text;
 
-			const lastLine = document.lineCount - 1
+			const lastLine = document.lineCount - 1;
 			let column = cursorPosition.character;
 
-			const lineLeftPadding = lineContent.length - lineContent.trimStart().length
+			const lineLeftPadding = lineContent.length - lineContent.trimStart().length;
 			if (column < lineLeftPadding) {
 				const newPosition = new vscode.Position(line, lineLeftPadding);
 				editor.selection = new vscode.Selection(newPosition, newPosition);
 				return;
 			}
 
-			if (line === lastLine && column === lineContent.length) { return }
+			if (line === lastLine && column === lineContent.length) { return; }
 
 			if (lineContent.slice(column + 1).replace(/\s/g, '').length === 0) {
 				const newPosition = new vscode.Position(line + 1, 0);
@@ -53,15 +53,22 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			let right = lineContent.charCodeAt(column);
 
 			if (right === CharCode.Underline && left !== CharCode.Dash ||
-				right === CharCode.Dash && left !== CharCode.Dash
+				right === CharCode.Dash && left !== CharCode.Dash ||
+				(stopOnPunctuation && (
+					right === CharCode.Period && left !== CharCode.Period ||
+					right === CharCode.Colon && left !== CharCode.Colon ||
+					right === CharCode.Slash && left !== CharCode.Slash ||
+					right === CharCode.Comma && left !== CharCode.Comma
+				))
 			) {
 				const newPosition = new vscode.Position(line, column + 1);
 				editor.selection = new vscode.Selection(newPosition, newPosition);
-				return
+				return;
 			}
 			if ((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) ||
-				String.fromCharCode(left).match(/\s/)) {
-				column += 1
+				String.fromCharCode(left).match(/\s/)
+			) {
+				column += 1;
 			}
 
 			for (let i = column; i < lineContent.length - 1; i++) {
@@ -73,7 +80,7 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 					((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right)) || // camelCaseVariables
 					String.fromCharCode(left).match(/\s/) ||
 					(stopOnPunctuation && (
-						right === CharCode.Period && left !== CharCode.Period || 
+						right === CharCode.Period && left !== CharCode.Period ||
 						right === CharCode.Colon && left !== CharCode.Colon ||
 						right === CharCode.Slash && left !== CharCode.Slash ||
 						right === CharCode.Comma && left !== CharCode.Comma
@@ -86,7 +93,7 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			}
 			const newPosition = new vscode.Position(line, lineContent.length - 1);
 			editor.selection = new vscode.Selection(newPosition, newPosition);
-		}
+		};
 	} else {
 		return function goLeft() {
 			const editor = vscode.window.activeTextEditor;
@@ -99,7 +106,7 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			const lineContent = document.lineAt(line).text;
 			let column = cursorPosition.character;
 
-			if (line === 0 && column === 0) { return }
+			if (line === 0 && column === 0) { return; }
 
 			if (lineContent.slice(0, column).replace(/\s/g, '').length === 0) {
 				const newPosition = new vscode.Position(line - 1, document.lineAt(line - 1).text.length);
@@ -112,15 +119,22 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			let right = lineContent.charCodeAt(column);
 
 			if (left === CharCode.Underline && right !== CharCode.Underline ||
-				left === CharCode.Dash && right !== CharCode.Dash
+				left === CharCode.Dash && right !== CharCode.Dash ||
+				(stopOnPunctuation && (
+					right === CharCode.Period && left !== CharCode.Period ||
+					right === CharCode.Colon && left !== CharCode.Colon ||
+					right === CharCode.Slash && left !== CharCode.Slash ||
+					right === CharCode.Comma && left !== CharCode.Comma
+				))
 			) {
 				const newPosition = new vscode.Position(line, column - 1);
 				editor.selection = new vscode.Selection(newPosition, newPosition);
-				return
+				return;
 			}
 			if ((isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) ||
-				String.fromCharCode(left).match(/\s/)) {
-				column -= 1
+				String.fromCharCode(left).match(/\s/)
+			) {
+				column -= 1;
 			}
 
 			for (let i = column; i > 1; i--) {
@@ -132,9 +146,9 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 					(isLowerAsciiLetter(left) || isAsciiDigit(left)) && isUpperAsciiLetter(right) || // camelCaseVariables
 					String.fromCharCode(left).match(/\s/) ||
 					(stopOnPunctuation && (
-						right === CharCode.Period && left !== CharCode.Period || 
+						right === CharCode.Period && left !== CharCode.Period ||
 						right === CharCode.Colon && left !== CharCode.Colon ||
-						right === CharCode.Slash && left !== CharCode.Slash || 
+						right === CharCode.Slash && left !== CharCode.Slash ||
 						right === CharCode.Comma && left !== CharCode.Comma
 					))
 				) {
@@ -145,7 +159,7 @@ function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctu
 			}
 			const newPosition = new vscode.Position(line, 0);
 			editor.selection = new vscode.Selection(newPosition, newPosition);
-		}
+		};
 	}
 }
 
