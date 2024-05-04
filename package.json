@@ -1,7 +1,7 @@
 {
   "name": "respect-casings",
-  "displayName": "Respect Casings",
-  "description": "Make ctrl+arrow respect camel/snake/kebab/pascal case",
+  "displayName": "Cursor Case Respect",
+  "description": "Better text cursor that respect camel/snake/kebab/pascal case",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.88.0"
@@ -15,11 +15,19 @@
     "commands": [
       {
         "command": "respect-casings.left",
-        "title": "Move to left respecting casing"
+        "title": "Respect case: Move text cursor to the left"
       },
       {
         "command": "respect-casings.right",
-        "title": "Move to right respecting casing"
+        "title": "Respect case: move text cursor to the right"
+      },
+      {
+        "command": "respect-casings.leftStopsOnPunctuation",
+        "title": "Respect case: Move text cursor to the left, stops on punctuation"
+      },
+      {
+        "command": "respect-casings.rightStopsOnPunctuation",
+        "title": "Respect case: move text cursor to the right, stops on punctuation"
       }
     ],
     "keybindings": [
