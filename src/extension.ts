@@ -3,10 +3,10 @@ import { CharCode, isAsciiDigit, isLowerAsciiLetter, isUpperAsciiLetter } from '
 
 export function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel('Respect');
-	let respectCaseLeft = vscode.commands.registerCommand('respect-casings.left', factoryOfCursors('left', { stopOnPunctuation: false }));
-	let respectCaseRight = vscode.commands.registerCommand('respect-casings.right', factoryOfCursors('right', { stopOnPunctuation: false }));
-	let respectCaseLeftStops = vscode.commands.registerCommand('respect-casings.leftStopsOnPunctuation', factoryOfCursors('left', { stopOnPunctuation: true }));
-	let respectCaseRightStops = vscode.commands.registerCommand('respect-casings.rightStopsOnPunctuation', factoryOfCursors('right', { stopOnPunctuation: true }));
+	let respectCaseLeft = vscode.commands.registerCommand('respect-casings.left', factoryOfCursorsHandlers('left', { stopOnPunctuation: false }));
+	let respectCaseRight = vscode.commands.registerCommand('respect-casings.right', factoryOfCursorsHandlers('right', { stopOnPunctuation: false }));
+	let respectCaseLeftStops = vscode.commands.registerCommand('respect-casings.leftStopsOnPunctuation', factoryOfCursorsHandlers('left', { stopOnPunctuation: true }));
+	let respectCaseRightStops = vscode.commands.registerCommand('respect-casings.rightStopsOnPunctuation', factoryOfCursorsHandlers('right', { stopOnPunctuation: true }));
 
 	context.subscriptions.push(respectCaseLeft);
 	context.subscriptions.push(respectCaseRight);
@@ -19,7 +19,7 @@ interface FactoryOpts {
 	stopOnPunctuation : boolean
 }
 
-function factoryOfCursors(rightOrfLeft: 'right' | 'left', { stopOnPunctuation } : FactoryOpts) {
+function factoryOfCursorsHandlers(rightOrfLeft: 'right' | 'left', { stopOnPunctuation } : FactoryOpts) {
 	if (rightOrfLeft === 'right') {
 		return function goRight() {
 			const editor = vscode.window.activeTextEditor;
