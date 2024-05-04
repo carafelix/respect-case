@@ -1,5 +1,5 @@
 # Cursor Case Respect for VS code
-### Tired of skipping words in your variable names? Because I am. Let me change my vars names in peace.
+### Skips more than the native one, respect nicely for casings.
 
 ![](./img/respectCase.gif)
 
